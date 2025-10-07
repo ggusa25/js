@@ -18,32 +18,20 @@ jobs:
           netsh advfirewall firewall add rule name="RDP-Tailscale" dir=in action=allow protocol=TCP localport=3389
           Restart-Service -Name TermService -Force
 
-      - name: Create RDP User with Secure Password
-        id: create_user
+      - name: Create RDP User with Static Credentials
         run: |
-          Add-Type -AssemblyName System.Security
-          $charSet = @{
-              Upper   = [char[]](65..90)
-              Lower   = [char[]](97..122)
-              Number  = [char[]](48..57)
-              Special = ([char[]](33..47) + [char[]](58..64) + [char[]](91..96) + [char[]](123..126))
-          }
-          $rawPassword = @()
-          $rawPassword += $charSet.Upper | Get-Random -Count 4
-          $rawPassword += $charSet.Lower | Get-Random -Count 4
-          $rawPassword += $charSet.Number | Get-Random -Count 4
-          $rawPassword += $charSet.Special | Get-Random -Count 4
-          $password = -join ($rawPassword | Sort-Object { Get-Random })
+          $username = "ele"
+          $password = "asd123"
           $securePass = ConvertTo-SecureString $password -AsPlainText -Force
-          if (Get-LocalUser -Name "RDP" -ErrorAction SilentlyContinue) {
-            Remove-LocalUser -Name "RDP"
+          if (Get-LocalUser -Name $username -ErrorAction SilentlyContinue) {
+            Remove-LocalUser -Name $username
           }
-          New-LocalUser -Name "RDP" -Password $securePass -AccountNeverExpires
-          Add-LocalGroupMember -Group "Administrators" -Member "RDP"
-          Add-LocalGroupMember -Group "Remote Desktop Users" -Member "RDP"
+          New-LocalUser -Name $username -Password $securePass -AccountNeverExpires
+          Add-LocalGroupMember -Group "Administrators" -Member $username
+          Add-LocalGroupMember -Group "Remote Desktop Users" -Member $username
           echo "RDP_PASSWORD=$password" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "::add-mask::$password"  # Menyembunyikan password di log, tapi tetap bisa tampilkan manual
-          Write-Host "::set-output name=password::$password"
+          echo "RDP_USERNAME=$username" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "::add-mask::$password"
 
       - name: Install Tailscale
         run: |
@@ -86,13 +74,13 @@ jobs:
         run: |
           Write-Host "`n=== RDP ACCESS ==="
           Write-Host "IP Address (Tailscale): $env:TAILSCALE_IP"
-          Write-Host "Username: RDP"
+          Write-Host "Username: $env:RDP_USERNAME"
           Write-Host "Password: $env:RDP_PASSWORD"
           Write-Host "=================="
           Write-Host ""
           Write-Host "Gunakan aplikasi Microsoft Remote Desktop di Android/iOS:"
           Write-Host "- IP: $env:TAILSCALE_IP"
-          Write-Host "- Username: RDP"
+          Write-Host "- Username: $env:RDP_USERNAME"
           Write-Host "- Password: $env:RDP_PASSWORD"
           Write-Host ""
           Write-Host "Akses hanya selama job ini berjalan. Untuk putuskan, stop workflow ini."
