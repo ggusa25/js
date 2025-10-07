@@ -18,10 +18,12 @@ jobs:
           netsh advfirewall firewall add rule name="RDP-Tailscale" dir=in action=allow protocol=TCP localport=3389
           Restart-Service -Name TermService -Force
 
-      - name: Create RDP User with Static Credentials
+      - name: Create RDP User with Random Credentials
+        id: create_user
         run: |
-          $username = "ele"
-          $password = "Asd12345!"
+          Add-Type -AssemblyName System.Web
+          $username = -join ((65..90) + (97..122) | Get-Random -Count 8 | % {[char]$_})
+          $password = [System.Web.Security.Membership]::GeneratePassword(12,3)
           $securePass = ConvertTo-SecureString $password -AsPlainText -Force
           if (Get-LocalUser -Name $username -ErrorAction SilentlyContinue) {
             Remove-LocalUser -Name $username
@@ -32,6 +34,8 @@ jobs:
           echo "RDP_PASSWORD=$password" | Out-File -FilePath $env:GITHUB_ENV -Append
           echo "RDP_USERNAME=$username" | Out-File -FilePath $env:GITHUB_ENV -Append
           echo "::add-mask::$password"
+          Write-Host "::set-output name=username::$username"
+          Write-Host "::set-output name=password::$password"
 
       - name: Install Tailscale
         run: |
@@ -45,7 +49,7 @@ jobs:
         id: ts_up
         run: |
           & "$env:ProgramFiles\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=gh-runner-$env:GITHUB_RUN_ID
-          # Tunggu sampai Tailscale dapat IP
+          # Wait until Tailscale gets an IP
           $tsIP = $null
           $retries = 0
           while (-not $tsIP -and $retries -lt 10) {
