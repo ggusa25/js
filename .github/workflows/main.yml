@@ -21,7 +21,7 @@ jobs:
       - name: Create RDP User with Static Credentials
         run: |
           $username = "ele"
-          $password = "asd123"
+          $password = "Asd12345!"
           $securePass = ConvertTo-SecureString $password -AsPlainText -Force
           if (Get-LocalUser -Name $username -ErrorAction SilentlyContinue) {
             Remove-LocalUser -Name $username
